@@ -12,7 +12,7 @@
 /********************  NeoPixel Config *************/
 
 #define PIN 2
-#define NUMLEDS 100
+#define NUMLEDS 90
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMLEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
@@ -35,33 +35,53 @@ uint16_t Balken = 0;
 
 /**************** NeoPixel Init ******************/
 
-// Color arrays
-int black[4] = { 0, 0, 0, 0 };
-int white[4] = { 0, 0, 0, 100 };
+//// Sonnenaufgang Color Array
+////				{ R, G , B, W }
+//int SonAu1[4] = { 7,7,12,0 };
+//int SonAu2[4] = { 39,21,12,0 };
+//int SonAu3[4] = { 157,13,1,0 };
+//int SonAu4[4] = { 163,21,1,0 };
+//int SonAu5[4] = { 186,67,1,0 };
+//int SonAu6[4] = { 227,237,56,0 };
+//int SonAu7[4] = { 227,237,56,50 };
+//
+//// Sonnenuntergang Color Array
+////				{ R, G , B, W }
+//int SonUn1[4] = { 220,230,50,40 };
+//int SonUn2[4] = { 220,230,50,0 };
+//int SonUn3[4] = { 186,67,1,0 };
+//int SonUn4[4] = { 163,21,1,0 };
+//int SonUn5[4] = { 157, 13, 1, 0 };
+//int SonUn6[4] = { 39, 21, 12, 0 };
+//int SonUn7[4] = { 0, 0, 12, 0 };
+
 
 // Sonnenaufgang Color Array
-int SonAu1[4] = { 7,7,12,0 };
-int SonAu2[4] = { 39,21,12,0 };
-int SonAu3[4] = { 157,13,1,0 };
+//				{ R, G , B, W }
+int SonAu1[4] = { 50,0,0,0 };
+int SonAu2[4] = { 150,5,0,0 };
+int SonAu3[4] = { 157,13,0,0 };
 int SonAu4[4] = { 163,21,1,0 };
 int SonAu5[4] = { 186,67,1,0 };
-int SonAu6[4] = { 227,237,56,0 };
-int SonAu7[4] = { 227,237,56,50 };
+int SonAu6[4] = { 240,256,30,50 };
+int SonAu7[4] = { 250,200,30,150 };
 
 // Sonnenuntergang Color Array
+//				{ R, G, B, W }
 int SonUn1[4] = { 220,230,50,40 };
 int SonUn2[4] = { 220,230,50,0 };
-int SonUn3[4] = { 186,67,1,0 };
-int SonUn4[4] = { 163,21,1,0 };
-int SonUn5[4] = { 157, 13, 1, 0 };
-int SonUn6[4] = { 39, 21, 12, 0 };
-int SonUn7[4] = { 0, 0, 12, 0 };
+int SonUn3[4] = { 186,68,2,0 };
+int SonUn4[4] = { 150,20,2,0 };
+int SonUn5[4] = { 100, 14, 2, 0 };
+int SonUn6[4] = { 2, 0, 6, 0 };
+int SonUn7[4] = { 0, 0, 12, 2 };
+
 
 // Set initial color
-uint8_t redVal = black[0];
-uint8_t grnVal = black[1];
-uint8_t bluVal = black[2];
-uint8_t whiteVal = black[3];
+uint8_t redVal = 0;
+uint8_t grnVal = 0;
+uint8_t bluVal = 0;
+uint8_t whiteVal = 0;
 
 uint16_t wait = 250;      // 10ms internal crossFade delay; increase for slower fades
 
@@ -73,6 +93,36 @@ uint16_t LEDStep = 0;
 uint8_t Durchlauf = 1;
 uint8_t SonneIndex = 0;
 
+
+/******** BLYNK FUNKTIONEN  ********************/
+
+/**** Sonnaufgang Starten **********/
+BLYNK_WRITE(V0) {
+
+	int i = param.asInt();
+	if (i = 1) {
+
+		SonneAuf();
+	}
+}
+
+/**** Durchlaufzeit einstellen *****/
+
+BLYNK_WRITE(V1) {
+
+	Blynk.virtualWrite(V1, param.asFloat());
+	wait = param.asFloat();
+
+}
+
+/**** Gesamthelligkeit *************/
+
+BLYNK_WRITE(V2) {
+
+	Blynk.virtualWrite(V2, param.asFloat());
+	maxHell = param.asFloat();	
+
+}
 
 
 void setup()
@@ -91,6 +141,7 @@ void loop()
 	Blynk.run();
 	SonneAuf();
 
+	strip.setBrightness(maxHell);
 }
 void SonneAuf()
 {
@@ -234,9 +285,6 @@ void crossFade(int color[4]) {
 
 		for (int i = 0; i < NUMLEDS; i++) {
 			strip.setPixelColor(i,strip.Color(redVal, grnVal, bluVal, whiteVal));
-
-			delay(5);					// delay für besseres Timing
-			strip.show();
 		}
 
 		delay(wait);					// delay für Durchlaufzeit	
@@ -248,6 +296,7 @@ void crossFade(int color[4]) {
 	prevB = bluVal;
 	prevW = whiteVal;
 
+	strip.show();
 }
 
 
