@@ -5,9 +5,9 @@
       "intelliSenseMode": "msvc-x64",
       "includePath": [
         "${projectRoot}..\\AquariumLEDLight_ESP8266",
+        "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\Adafruit_NeoPixel",
         "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.4.1\\libraries\\ESP8266WiFi\\src",
         "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\Blynk\\src",
-        "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\Blynk\\src\\utility",
         "${projectRoot}..\\..\\..\\..\\..\\Program Files (x86)\\Arduino\\libraries",
         "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries",
         "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.4.1\\libraries",
