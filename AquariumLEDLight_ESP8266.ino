@@ -22,6 +22,8 @@ char auth[] = "4463a0cab2b8474ab4083dc952c4c3c2";
 char ssid[] = "Andre+Janina";
 char pass[] = "winter12";
 
+WidgetLED led1(V0);
+
 /******* Variablen ********************************/
 
 uint8_t SoAuDa = 5;
@@ -97,23 +99,31 @@ uint8_t SonneIndex = 0;
 /******** BLYNK FUNKTIONEN  ********************/
 
 /**** Sonnaufgang Starten **********/
-BLYNK_WRITE(V0) {
 
-	int i = param.asInt();
-	if (i = 1) {
-
-		SonneAuf();
-	}
-}
 
 /**** Durchlaufzeit einstellen *****/
 
 BLYNK_WRITE(V1) {
 
-	Blynk.virtualWrite(V1, param.asFloat());
-	wait = param.asFloat();
+	int i = param.asInt();
+	Serial.print("In:");
+	Serial.println(i);
+		if (i == 1) {
 
+			led1.on();
+			SonneAuf();
+			Serial.print("on:");
+			Serial.println(i);
+		}
+		else
+		{
+			led1.off();
+			Serial.print("off:");
+			Serial.println(i);
+		}
+	
 }
+
 
 /**** Gesamthelligkeit *************/
 
@@ -139,10 +149,9 @@ void setup()
 void loop()
 {
 	Blynk.run();
-	SonneAuf();
-
 	strip.setBrightness(maxHell);
 }
+
 void SonneAuf()
 {
 	switch (Durchlauf)
@@ -217,14 +226,12 @@ int calculateStep(int prevValue, int endValue) {
 	return step;
 }
 
-/* The next function is calculateVal. When the loop value, i,
-*  reaches the step size appropriate for one of the
-*  colors, it increases or decreases the value of that color by 1.
-*  (R, G, and B are each calculated separately.)
-*/
-
 int calculateVal(int step, int val, int i) {
-
+	/* The next function is calculateVal. When the loop value, i,
+	*  reaches the step size appropriate for one of the
+	*  colors, it increases or decreases the value of that color by 1.
+	*  (R, G, and B are each calculated separately.)
+	*/
 	if ((step) && i % step == 0) { // If step is non-zero and its time to change a value,
 		if (step > 0) {              //   increment the value if step is positive...
 			val += 1;
@@ -243,14 +250,12 @@ int calculateVal(int step, int val, int i) {
 	return val;
 }
 
-/* crossFade() converts the percentage colors to a
-*  0-255 range, then loops 1020 times, checking to see if
-*  the value needs to be updated each time, then writing
-*  the color values to the correct pins.
-*/
-
 void crossFade(int color[4]) {
-
+	/* crossFade() converts the percentage colors to a
+	*  0-255 range, then loops 1020 times, checking to see if
+	*  the value needs to be updated each time, then writing
+	*  the color values to the correct pins.
+	*/
 	// Convert to 0-255
 	int R = (color[0]);// *255) / 100;
 	int G = (color[1]);// *255) / 100;
