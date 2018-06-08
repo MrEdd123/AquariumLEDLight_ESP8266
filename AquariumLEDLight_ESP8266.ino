@@ -8,7 +8,7 @@
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
 #include <Adafruit_NeoPixel.h>
-
+#include <EEPROM.h>
 /********************  NeoPixel Config *************/
 
 #define PIN 2
@@ -22,18 +22,20 @@ char auth[] = "4463a0cab2b8474ab4083dc952c4c3c2";
 char ssid[] = "Andre+Janina";
 char pass[] = "winter12";
 
-WidgetLED led1(V0);
+
+WidgetLCD lcd(V10);
+BlynkTimer timer;			//Blynk Timer aktivieren
+
 
 /******* Variablen ********************************/
 
 uint8_t SoAuDa = 5;
 uint8_t SoUnDa = 5;
-uint8_t maxHell = 240;
-uint8_t minHell = 100;
+uint8_t maxHell = 50;
+uint8_t minHell ;
 
 uint16_t Zeit;
 
-uint16_t Balken = 0;
 
 /**************** NeoPixel Init ******************/
 
@@ -93,53 +95,94 @@ uint8_t prevB = bluVal;
 uint8_t prevW = whiteVal;
 uint16_t LEDStep = 0;
 uint8_t Durchlauf = 1;
-uint8_t SonneIndex = 0;
+uint8_t SonneAUswitch = 0;
+uint8_t Programmswitch = 0;
+
+uint16_t ablaufwert = 0;
+
 
 
 /******** BLYNK FUNKTIONEN  ********************/
 
-/**** Sonnaufgang Starten **********/
-
-
-/**** Durchlaufzeit einstellen *****/
+/**** Sonnenaufgang Starten **********/
 
 BLYNK_WRITE(V1) {
 
 	int i = param.asInt();
-	Serial.print("In:");
-	Serial.println(i);
-		if (i == 1) {
+	if (i == 1) {
 
-			led1.on();
-			SonneAuf();
-			Serial.print("on:");
-			Serial.println(i);
-		}
-		else
-		{
-			led1.off();
-			Serial.print("off:");
-			Serial.println(i);
-		}
-	
+		Programmswitch = 1;
+		delay(250);
+	}
 }
+	
 
-
-/**** Gesamthelligkeit *************/
+/**** Sonne Mittag Starten **********/
 
 BLYNK_WRITE(V2) {
 
-	Blynk.virtualWrite(V2, param.asFloat());
-	maxHell = param.asFloat();	
+	int i = param.asInt();
+	if (i == 1) {
+		Programmswitch = 2;
+		delay(250);
+
+	}
+}
+
+
+/**** Sonnenuntergang Starten **********/
+
+BLYNK_WRITE(V3) {
+
+	int i = param.asInt();
+	if (i == 1) {
+		Programmswitch = 3;
+		delay(250);
+		
+	}
+}
+
+/**** Durchlaufzeit einstellen *****/
+
+
+BLYNK_WRITE(V4) {
+
+	Blynk.virtualWrite(V4, param.asInt());
+	wait = param.asInt();	
+	EEPROM.begin(256);
+	EEPROM.put(0, wait);
+	EEPROM.commit();
+	EEPROM.end();
+
+}
+
+/**** Gesamthelligkeit *************/
+
+BLYNK_WRITE(V5) {
+
+	Blynk.virtualWrite(V5, param.asInt());
+	maxHell = param.asInt();
+	EEPROM.begin(256);
+	EEPROM.put(5, maxHell);
+	EEPROM.commit();
+	EEPROM.end();
 
 }
 
 
 void setup()
 {
-	// Debug console
 	Serial.begin(115200);
 	Blynk.begin(auth, ssid, pass);
+
+	EEPROM.begin(256);
+	EEPROM.get(0, wait);
+	EEPROM.get(5, maxHell);
+	EEPROM.end();
+
+	lcd.clear();
+	lcd.print(4, 0, "START");
+	
 	/*********** Adafruit Neopixel Starten *******/
 	strip.begin();
 	strip.show();
@@ -148,42 +191,70 @@ void setup()
 
 void loop()
 {
+	
 	Blynk.run();
 	strip.setBrightness(maxHell);
+	strip.show();
+
+	switch (Programmswitch) {
+
+	case 1:
+		SonneAuf();
+		lcd.print(0, 1,"Aufgang: ");
+		ablaufwert++;
+		lcd.print(12, 1, ablaufwert);
+		break;
+	case 2:
+		
+		break;
+	case 3:
+		SonneUn();
+		lcd.print(0, 1,"Untergang: ");
+		ablaufwert--;
+		lcd.print(12, 1,ablaufwert);
+		break;
+	case 4:
+		break;
+	}
+	
 }
+
 
 void SonneAuf()
 {
-	switch (Durchlauf)
-	{
-	case 1:
-		crossFade(SonAu1);
-		break;
-	case 2:
-		crossFade(SonAu2);
-		break;
-	case 3:
-		crossFade(SonAu3);
-		break;
-	case 4:
-		crossFade(SonAu4);
-		break;
-	case 5:
-		crossFade(SonAu5);
-		break;
-	case 6:
-		crossFade(SonAu6);
-		break;
-	case 7:
-		crossFade(SonAu7);
-		break;
-	case 8:
-		Durchlauf = 1;
-		SonneIndex = 0;
-		Balken = 0;
-		break;
+	if (SonneAUswitch = 1) {
+
+		switch (Durchlauf)
+		{
+		case 1:
+			crossFade(SonAu1);
+			break;
+		case 2:
+			crossFade(SonAu2);
+			break;
+		case 3:
+			crossFade(SonAu3);
+			break;
+		case 4:
+			crossFade(SonAu4);
+			break;
+		case 5:
+			crossFade(SonAu5);
+			break;
+		case 6:
+			crossFade(SonAu6);
+			break;
+		case 7:
+			crossFade(SonAu7);
+			break;
+		case 8:
+			Durchlauf = 1;
+			Programmswitch = 4;
+			break;
+		}
 	}
 }
+	
 
 void SonneUn()
 {
@@ -212,8 +283,7 @@ void SonneUn()
 		break;
 	case 8:
 		Durchlauf = 1;
-		SonneIndex = 0;
-		Balken = 0;
+		Programmswitch = 4;
 		break;
 	}
 }
@@ -267,20 +337,11 @@ void crossFade(int color[4]) {
 	int stepB = calculateStep(prevB, B);
 	int stepW = calculateStep(prevW, W);
 
-
-
-
-
-	//for (int LEDStep=0; LEDStep < 1020; LEDStep++){
-
 	if (LEDStep <= 1020) {
 		LEDStep++;
 		if (LEDStep >= 1021) {
 			LEDStep = 0;
 			Durchlauf++;
-			if (Durchlauf == 8) {
-				SonneIndex == 0;
-			}
 		}
 
 		redVal = calculateVal(stepR, redVal, LEDStep);
