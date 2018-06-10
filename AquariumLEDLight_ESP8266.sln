@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESP8266mDNS", "..\..\..\App
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArduinoOTA", "..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\libraries\ArduinoOTA\ArduinoOTA.vcxitems", "{ED4C15FE-3B5E-43F1-B16A-1A062DC0D3AC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESP8266WebServer", "..\..\..\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\libraries\ESP8266WebServer\ESP8266WebServer.vcxitems", "{39A5FB98-1850-498E-AB66-620BDC560165}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86

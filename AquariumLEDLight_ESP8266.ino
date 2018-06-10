@@ -7,10 +7,12 @@
 
 
 
+
 const int FW_VERSION = 0500;
 
 #include <ESP8266WiFi.h>
-#include <ArduinoOTA.h>
+#include <ESP8266WebServerSecure.h>
+#include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <BlynkSimpleEsp8266.h>
@@ -28,6 +30,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMLEDS, PIN, NEO_GRBW + NEO_KHZ800)
 /*************** Blynk und WIFI Config **************/
 char auth[] = "4463a0cab2b8474ab4083dc952c4c3c2";
 
+const char* host = "AquariumLED-1";
 char ssid[] = "Andre+Janina";
 char pass[] = "winter12";
 
@@ -180,6 +183,8 @@ BLYNK_WRITE(V5) {
 
 }
 
+ESP8266WebServer server(80);
+const char* serverIndex = "<form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>";
 
 void setup()
 {
@@ -187,52 +192,101 @@ void setup()
 	Blynk.begin(auth, ssid, pass);
 
 
-	/********** Arduino OTA *******************/
+	///********** Arduino OTA *******************/
 
-	// Port defaults to 8266
-	// ArduinoOTA.setPort(8266);
+	//// Port defaults to 8266
+	//// ArduinoOTA.setPort(8266);
 
-	// Hostname defaults to esp8266-[ChipID]
-	ArduinoOTA.setHostname("AquariumLED - 1");
+	//// Hostname defaults to esp8266-[ChipID]
+	//ArduinoOTA.setHostname("AquariumLED - 1");
 
-	// No authentication by default
-	ArduinoOTA.setPassword("admin");
+	//// No authentication by default
+	////ArduinoOTA.setPassword("admin");
 
-	// Password can be set with it's md5 value as well
-	//MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
-	//ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
+	//// Password can be set with it's md5 value as well
+	////MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
+	////ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
 
-	ArduinoOTA.onStart([]() {
-		String type;
-		if (ArduinoOTA.getCommand() == U_FLASH)
-			type = "sketch";
-		else // U_SPIFFS
-			type = "filesystem";
+	//ArduinoOTA.onStart([]() {
+	//	String type;
+	//	if (ArduinoOTA.getCommand() == U_FLASH)
+	//		type = "sketch";
+	//	else // U_SPIFFS
+	//		type = "filesystem";
 
-		// NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-		Serial.println("Start updating " + type);
-	});
-	ArduinoOTA.onEnd([]() {
-		Serial.println("\nEnd");
-	});
-	ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-		Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-	});
-	ArduinoOTA.onError([](ota_error_t error) {
-		Serial.printf("Error[%u]: ", error);
-		if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-		else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-		else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-		else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-		else if (error == OTA_END_ERROR) Serial.println("End Failed");
-	});
-	ArduinoOTA.begin();
-	Serial.println("Ready");
-	Serial.print("IP address: ");
-	Serial.println(WiFi.localIP());
+	//	// NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+	//	Serial.println("Start updating " + type);
+	//});
+	//ArduinoOTA.onEnd([]() {
+	//	Serial.println("\nEnd");
+	//});
+	//ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+	//	Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+	//});
+	//ArduinoOTA.onError([](ota_error_t error) {
+	//	Serial.printf("Error[%u]: ", error);
+	//	if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+	//	else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+	//	else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+	//	else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+	//	else if (error == OTA_END_ERROR) Serial.println("End Failed");
+	//});
+	//ArduinoOTA.begin();
+	//Serial.println("Ready");
+	//Serial.print("IP address: ");
+	//Serial.println(WiFi.localIP());
 
-	/******************************************/
+	///******************************************/
+	/******************* WEB Update *************/
 
+	if (WiFi.waitForConnectResult() == WL_CONNECTED) {
+		MDNS.begin(host);
+		server.on("/", HTTP_GET, []() {
+			server.sendHeader("Connection", "close");
+			server.send(200, "text/html", serverIndex);
+		});
+		server.on("/update", HTTP_POST, []() {
+			server.sendHeader("Connection", "close");
+			server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
+			ESP.restart();
+		}, []() {
+			HTTPUpload& upload = server.upload();
+			if (upload.status == UPLOAD_FILE_START) {
+				Serial.setDebugOutput(true);
+				WiFiUDP::stopAll();
+				Serial.printf("Update: %s\n", upload.filename.c_str());
+				uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+				if (!Update.begin(maxSketchSpace)) {//start with max available size
+					Update.printError(Serial);
+				}
+			}
+			else if (upload.status == UPLOAD_FILE_WRITE) {
+				if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+					Update.printError(Serial);
+				}
+			}
+			else if (upload.status == UPLOAD_FILE_END) {
+				if (Update.end(true)) { //true to set the size to the current progress
+					Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+				}
+				else {
+					Update.printError(Serial);
+				}
+				Serial.setDebugOutput(false);
+			}
+			yield();
+		});
+		server.begin();
+		MDNS.addService("http", "tcp", 80);
+
+		Serial.printf("Ready! Open http://%s.local in your browser\n", host);
+	}
+	else {
+
+		Serial.println("WiFi Failed");
+	}
+
+	/********************************************/
 	EEPROM.begin(256);
 	EEPROM.get(0, wait);
 	EEPROM.get(5, maxHell);
@@ -249,7 +303,9 @@ void setup()
 
 void loop()
 {
-	ArduinoOTA.handle();
+	server.handleClient();
+	delay(1);
+	//ArduinoOTA.handle();
 
 	Blynk.run();
 	strip.setBrightness(maxHell);
