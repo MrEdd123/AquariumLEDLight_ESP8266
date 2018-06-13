@@ -6,8 +6,6 @@
 */
 
 
-
-
 const int FW_VERSION = 0500;
 
 #include <ESP8266WiFi.h>
@@ -28,8 +26,8 @@ const int FW_VERSION = 0500;
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMLEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
 /*************** Blynk und WIFI Config **************/
-char auth[] = "4463a0cab2b8474ab4083dc952c4c3c2";
-
+//char auth[] = "b256098a8aad4578a05a794c871376f2"; //LED Light 1
+char auth[] = "f1e8555bc7b443ad9abb5b25e40d7779"; //LED Light 2
 const char* host = "AquariumLED-1";
 char ssid[] = "Andre+Janina";
 char pass[] = "winter12";
@@ -87,10 +85,10 @@ int SonAu7[4] = { 250,200,100,150 };
 int SonUn1[4] = { 250,200,100,40 };
 int SonUn2[4] = { 240,255,30,0 };
 int SonUn3[4] = { 186,68,2,0 };
-int SonUn4[4] = { 150,20,2,0 };
-int SonUn5[4] = { 100, 14, 2, 0 };
+int SonUn4[4] = { 150,20,0,0 };
+int SonUn5[4] = { 50, 14,0, 0 };
 int SonUn6[4] = { 0, 0, 6, 0 };
-int SonUn7[4] = { 0, 0, 12, 2 };
+int SonUn7[4] = { 0, 0, 10, 1 };
 
 
 // Set initial color
@@ -116,15 +114,12 @@ uint16_t ablaufwert = 0;
 
 /******** BLYNK FUNKTIONEN  ********************/
 
-
-
 /**** Sonnenaufgang Starten **********/
 
 BLYNK_WRITE(V1) {
 
 	int i = param.asInt();
 	if (i == 1) {
-
 		Programmswitch = 1;
 		delay(250);
 	}
@@ -192,51 +187,7 @@ void setup()
 	Blynk.begin(auth, ssid, pass);
 
 
-	///********** Arduino OTA *******************/
-
-	//// Port defaults to 8266
-	//// ArduinoOTA.setPort(8266);
-
-	//// Hostname defaults to esp8266-[ChipID]
-	//ArduinoOTA.setHostname("AquariumLED - 1");
-
-	//// No authentication by default
-	////ArduinoOTA.setPassword("admin");
-
-	//// Password can be set with it's md5 value as well
-	////MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
-	////ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
-
-	//ArduinoOTA.onStart([]() {
-	//	String type;
-	//	if (ArduinoOTA.getCommand() == U_FLASH)
-	//		type = "sketch";
-	//	else // U_SPIFFS
-	//		type = "filesystem";
-
-	//	// NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-	//	Serial.println("Start updating " + type);
-	//});
-	//ArduinoOTA.onEnd([]() {
-	//	Serial.println("\nEnd");
-	//});
-	//ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-	//	Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-	//});
-	//ArduinoOTA.onError([](ota_error_t error) {
-	//	Serial.printf("Error[%u]: ", error);
-	//	if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-	//	else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-	//	else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-	//	else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-	//	else if (error == OTA_END_ERROR) Serial.println("End Failed");
-	//});
-	//ArduinoOTA.begin();
-	//Serial.println("Ready");
-	//Serial.print("IP address: ");
-	//Serial.println(WiFi.localIP());
-
-	///******************************************/
+	
 	/******************* WEB Update *************/
 
 	if (WiFi.waitForConnectResult() == WL_CONNECTED) {
@@ -305,7 +256,6 @@ void loop()
 {
 	server.handleClient();
 	delay(1);
-	//ArduinoOTA.handle();
 
 	Blynk.run();
 	strip.setBrightness(maxHell);
@@ -318,6 +268,7 @@ void loop()
 		lcd.print(0, 1,"Aufgang: ");
 		ablaufwert++;
 		lcd.print(12, 1, ablaufwert);
+   Serial.println(ablaufwert);
 		break;
 	case 2:
 		
